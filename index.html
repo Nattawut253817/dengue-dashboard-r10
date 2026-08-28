@@ -815,8 +815,25 @@ header.top .titleblock .org{font-size:12.5px; color:var(--text-muted); letter-sp
 .chip.snapshot.offline::before{background:var(--status-warning);}
 .chip.snapshot.loading::before{background:var(--text-muted); animation:pulse 1.1s ease-in-out infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
-header.top .meta{text-align:right; font-size:12.5px; color:var(--text-muted); display:flex; flex-direction:column; gap:4px; align-items:flex-end;}
+header.top .meta{text-align:right; font-size:12.5px; color:var(--text-muted); display:flex; flex-direction:column; gap:8px; align-items:flex-end;}
 header.top .meta a{color:var(--text-secondary); text-decoration:underline; text-decoration-color:var(--border-strong);}
+
+.btn-refresh{
+  display:inline-flex; align-items:center; gap:6px;
+  height:30px; padding:0 13px 0 11px; border-radius:999px;
+  border:1px solid var(--accent); background:var(--surface);
+  color:var(--accent); font-family:inherit; font-size:12.5px; font-weight:700;
+  cursor:pointer; white-space:nowrap; box-shadow:var(--shadow);
+  transition:background .15s ease, transform .1s ease, opacity .15s ease;
+}
+.btn-refresh:hover{background:var(--accent-wash);}
+.btn-refresh:active{transform:scale(.96);}
+.btn-refresh:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.btn-refresh:disabled{opacity:.65; cursor:default;}
+.btn-refresh:disabled:hover{background:var(--surface);}
+.btn-refresh .icon-refresh{flex:none; display:block;}
+.btn-refresh.loading .icon-refresh{animation:spin .85s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
 /* ---------- filters ---------- */
 .filters{
@@ -958,6 +975,23 @@ table.data td.strong{color:var(--text-primary); font-weight:600;}
 .sym-icons{display:flex; gap:4px; flex-wrap:wrap; max-width:160px;}
 .sym-tag{font-size:10.5px; padding:1px 6px; border-radius:5px; background:var(--surface-2); color:var(--text-secondary); white-space:nowrap;}
 
+.pagination{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:12px;}
+.pagination-info{font-size:12.5px; color:var(--text-muted); font-variant-numeric:tabular-nums;}
+.pagination-controls{display:flex; align-items:center; gap:4px; margin-left:auto;}
+.page-numbers{display:flex; align-items:center; gap:4px;}
+.page-btn{
+  min-width:30px; height:30px; padding:0 8px; border-radius:8px; border:1px solid var(--border);
+  background:var(--surface); color:var(--text-secondary); font-family:inherit; font-size:12.5px; font-weight:600;
+  cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
+  font-variant-numeric:tabular-nums; transition:background .12s, border-color .12s, color .12s;
+}
+.page-btn:hover:not(:disabled):not(.active){background:var(--surface-2); border-color:var(--border-strong); color:var(--text-primary);}
+.page-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.page-btn:disabled{opacity:.35; cursor:default;}
+.page-btn.active{background:var(--accent); border-color:var(--accent); color:#fff; cursor:default;}
+.page-btn.page-nav{font-size:15px; font-weight:700;}
+.page-ellipsis{width:20px; text-align:center; color:var(--text-muted); font-size:12.5px;}
+
 /* ---------- footer ---------- */
 footer{margin-top:20px; padding-top:16px; border-top:1px solid var(--border); font-size:12px; color:var(--text-muted); line-height:1.75;}
 footer h3{font-size:12.5px; color:var(--text-secondary); margin:0 0 6px; font-weight:700;}
@@ -980,8 +1014,13 @@ footer code{background:var(--surface-2); padding:1px 5px; border-radius:4px; fon
     </div>
     <div class="meta">
       <div id="syncStatusLine">ข้อมูล ณ วันที่ <b id="asOfDate" style="color:var(--text-secondary)">-</b></div>
-      <div>แหล่งข้อมูล: <a href="https://docs.google.com/spreadsheets/d/1NTxcQvNkjdfq8vX_-1gcXa0fJjwGr4NO2XInzNcUV0Q/edit" target="_blank" rel="noopener">Google Sheets (ชีต serotype)</a></div>
-      <button class="reset" id="btnRefresh" type="button" style="height:28px; padding:0 10px; font-size:12px; margin-top:2px;">↻ รีเฟรชข้อมูลจาก Sheets</button>
+      <button class="btn-refresh" id="btnRefresh" type="button">
+        <svg class="icon-refresh" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
+          <polyline points="21 3 21 9 15 9"/>
+        </svg>
+        <span id="btnRefreshLabel">รีเฟรชข้อมูล</span>
+      </button>
     </div>
   </header>
 
@@ -1111,6 +1150,14 @@ footer code{background:var(--surface-2); padding:1px 5px; border-radius:4px; fon
         </thead>
         <tbody id="tableBody"></tbody>
       </table>
+    </div>
+    <div class="pagination">
+      <div class="pagination-info" id="pageInfo"></div>
+      <div class="pagination-controls" id="pageControls">
+        <button class="page-btn page-nav" id="btnPrevPage" type="button" aria-label="หน้าก่อนหน้า">‹</button>
+        <div class="page-numbers" id="pageNumbers"></div>
+        <button class="page-btn page-nav" id="btnNextPage" type="button" aria-label="หน้าถัดไป">›</button>
+      </div>
     </div>
   </div>
 
@@ -1283,10 +1330,20 @@ function mapGvizRow(row){
   };
 }
 async function fetchLiveData(){
-  const controller = new AbortController();
-  const timer = setTimeout(()=>controller.abort(), 9000);
+  // Note: deliberately NOT using AbortController/AbortSignal here. Some Chrome
+  // extensions hook window.fetch and relay its arguments via postMessage to
+  // their own context; an AbortSignal can't be structured-cloned, which makes
+  // fetch throw "DataCloneError: ... AbortSignal object could not be cloned"
+  // before the request is even sent. A plain timeout race avoids feeding
+  // fetch a signal at all, so it works regardless of what extensions are
+  // installed. The underlying request may keep running in the background if
+  // it loses the race, but its result is simply discarded.
+  let timeoutId;
+  const timeout = new Promise((_, reject)=>{
+    timeoutId = setTimeout(()=>reject(new Error('timeout: Google Sheets ตอบสนองช้าเกินไป')), 9000);
+  });
   try{
-    const res = await fetch(GVIZ_URL, {signal:controller.signal, cache:'no-store'});
+    const res = await Promise.race([fetch(GVIZ_URL, {cache:'no-store'}), timeout]);
     if(!res.ok) throw new Error('HTTP '+res.status);
     const text = await res.text();
     const jsonStr = text.substring(text.indexOf('(')+1, text.lastIndexOf(')'));
@@ -1299,7 +1356,7 @@ async function fetchLiveData(){
     if(!rows.length) throw new Error('empty sheet');
     return rows;
   } finally {
-    clearTimeout(timer);
+    clearTimeout(timeoutId);
   }
 }
 function setSyncUI(mode){
@@ -1441,6 +1498,9 @@ function getFiltered(){
 /* ---------------- renderers ---------------- */
 let sortKey = 'id', sortDir = 1;
 let map, mapMarkers = [], mapTileLayer;
+const PAGE_SIZE = 20;
+let currentPage = 1;
+let lastRows = [];
 
 function renderKPIs(rows){
   document.getElementById('kpiTotal').textContent = rows.length;
@@ -1699,6 +1759,65 @@ function symptomTags(r){
   return `<div class="sym-icons">${tags.map(t=>`<span class="sym-tag">${t}</span>`).join('')}</div>`;
 }
 
+function getPageList(current, total){
+  const delta = 1;
+  const range = [];
+  for(let i=1;i<=total;i++){
+    if(i===1 || i===total || (i>=current-delta && i<=current+delta)) range.push(i);
+  }
+  const withDots = [];
+  let prev = 0;
+  range.forEach(i=>{
+    if(prev && i-prev>1) withDots.push('…');
+    withDots.push(i);
+    prev = i;
+  });
+  return withDots;
+}
+
+function goToPage(p){
+  currentPage = p;
+  renderTable(lastRows);
+  const panel = document.querySelector('.table-panel');
+  const top = panel.getBoundingClientRect().top;
+  if(top < 0) panel.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderPagination(totalItems){
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const info = document.getElementById('pageInfo');
+  const start = totalItems===0 ? 0 : (currentPage-1)*PAGE_SIZE+1;
+  const end = Math.min(currentPage*PAGE_SIZE, totalItems);
+  info.textContent = totalItems===0 ? '' : `แสดง ${start.toLocaleString('th-TH')}–${end.toLocaleString('th-TH')} จาก ${totalItems.toLocaleString('th-TH')} รายการ`;
+
+  const controls = document.getElementById('pageControls');
+  controls.style.display = totalPages<=1 ? 'none' : 'flex';
+  if(totalPages<=1) return;
+
+  document.getElementById('btnPrevPage').disabled = currentPage<=1;
+  document.getElementById('btnNextPage').disabled = currentPage>=totalPages;
+
+  const numbers = document.getElementById('pageNumbers');
+  numbers.innerHTML = '';
+  getPageList(currentPage, totalPages).forEach(p=>{
+    if(p==='…'){
+      const span = document.createElement('span');
+      span.className = 'page-ellipsis';
+      span.textContent = '…';
+      numbers.appendChild(span);
+    } else {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'page-btn' + (p===currentPage ? ' active':'');
+      btn.textContent = p;
+      btn.setAttribute('aria-label', `หน้า ${p}`);
+      if(p===currentPage) btn.setAttribute('aria-current','page');
+      btn.addEventListener('click', ()=>goToPage(p));
+      numbers.appendChild(btn);
+    }
+  });
+}
+
 function renderTable(rows){
   const tbody = document.getElementById('tableBody');
   tbody.innerHTML = '';
@@ -1714,9 +1833,15 @@ function renderTable(rows){
   });
   if(!sorted.length){
     tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:24px; color:var(--text-muted);">ไม่มีข้อมูลตรงตามตัวกรองที่เลือก</td></tr>';
+    renderPagination(0);
     return;
   }
-  sorted.forEach(r=>{
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  if(currentPage > totalPages) currentPage = totalPages;
+  if(currentPage < 1) currentPage = 1;
+  const startIdx = (currentPage-1)*PAGE_SIZE;
+  const pageRows = sorted.slice(startIdx, startIdx+PAGE_SIZE);
+  pageRows.forEach(r=>{
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td class="num strong">${r.id}</td>
@@ -1733,6 +1858,7 @@ function renderTable(rows){
     `;
     tbody.appendChild(tr);
   });
+  renderPagination(sorted.length);
 }
 
 document.querySelectorAll('table.data thead th').forEach(th=>{
@@ -1749,6 +1875,8 @@ document.querySelectorAll('table.data thead th').forEach(th=>{
 
 function updateAll(){
   const rows = getFiltered();
+  lastRows = rows;
+  currentPage = 1;
   document.getElementById('filterStatus').innerHTML = `แสดง <b>${rows.length}</b> จาก ${DATA.length} รายการ`;
   document.getElementById('footN').textContent = DATA.length;
   renderKPIs(rows);
@@ -1776,11 +1904,17 @@ function init(){
     document.getElementById('fDateTo').value = dates[dates.length-1];
     updateAll();
   });
+  document.getElementById('btnPrevPage').addEventListener('click', ()=>{ if(currentPage>1) goToPage(currentPage-1); });
+  document.getElementById('btnNextPage').addEventListener('click', ()=>{
+    const totalPages = Math.max(1, Math.ceil(lastRows.length / PAGE_SIZE));
+    if(currentPage<totalPages) goToPage(currentPage+1);
+  });
   document.getElementById('btnRefresh').addEventListener('click', async ()=>{
     const btn = document.getElementById('btnRefresh');
-    btn.disabled = true; btn.textContent = 'กำลังโหลด…';
+    const label = document.getElementById('btnRefreshLabel');
+    btn.disabled = true; btn.classList.add('loading'); label.textContent = 'กำลังโหลด…';
     await loadData();
-    btn.disabled = false; btn.textContent = '↻ รีเฟรชข้อมูลจาก Sheets';
+    btn.disabled = false; btn.classList.remove('loading'); label.textContent = 'รีเฟรชข้อมูล';
   });
 
   window.addEventListener('scroll', ()=>{ if(tooltipEl.classList.contains('show')) hideTooltip(); }, {passive:true});
