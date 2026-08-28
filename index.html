@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เฝ้าระวังไข้เลือดออก เขตสุขภาพที่ 10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   TOKENS — light default, dark via prefers-color-scheme + [data-theme]
+   Palette: validated dataviz reference (categorical + status)
+   ========================================================= */
+:root{
+  color-scheme: light;
+  --bg:            #f9f9f7;
+  --surface:       #fcfcfb;
+  --surface-2:     #f3f2ee;
+  --text-primary:  #0b0b0b;
+  --text-secondary:#52514e;
+  --text-muted:    #898781;
+  --grid:          #e1e0d9;
+  --axis:          #c3c2b7;
+  --border:        rgba(11,11,11,0.10);
+  --border-strong: rgba(11,11,11,0.16);
+
+  --accent:        #2a78d6;
+  --accent-wash:   rgba(42,120,214,0.10);
+
+  --s-type1:       #2a78d6;
+  --s-type2:       #eb6834;
+  --s-type3:       #1baf7a;
+  --s-type4:       #eda100;
+  --s-male:        #2a78d6;
+  --s-female:      #e87ba4;
+  --s-neutral:     #b9b7ae;
+  --s-neutral-tx:  #6b6a64;
+
+  --status-good:      #0ca30c;
+  --status-good-wash: rgba(12,163,12,0.12);
+  --status-critical:      #d03b3b;
+  --status-critical-wash: rgba(208,59,59,0.10);
+  --status-warning:       #c98500;
+  --status-warning-wash:  rgba(201,133,0,0.12);
+
+  --shadow: 0 1px 2px rgba(16,24,40,.05), 0 2px 8px rgba(16,24,40,.06);
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:            #0d0d0d;
+    --surface:       #1a1a19;
+    --surface-2:     #232322;
+    --text-primary:  #ffffff;
+    --text-secondary:#c3c2b7;
+    --text-muted:    #898781;
+    --grid:          #2c2c2a;
+    --axis:          #383835;
+    --border:        rgba(255,255,255,0.10);
+    --border-strong: rgba(255,255,255,0.16);
+
+    --accent:        #3987e5;
+    --accent-wash:   rgba(57,135,229,0.14);
+
+    --s-type1:       #3987e5;
+    --s-type2:       #d95926;
+    --s-type3:       #199e70;
+    --s-type4:       #c98500;
+    --s-male:        #3987e5;
+    --s-female:      #d55181;
+    --s-neutral:     #4a4a47;
+    --s-neutral-tx:  #a6a49c;
+
+    --status-good:      #0ca30c;
+    --status-good-wash: rgba(12,163,12,0.16);
+    --status-critical:      #e66767;
+    --status-critical-wash: rgba(230,103,103,0.14);
+    --status-warning:       #fab219;
+    --status-warning-wash:  rgba(250,178,25,0.14);
+
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 2px 10px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:            #0d0d0d;
+  --surface:       #1a1a19;
+  --surface-2:     #232322;
+  --text-primary:  #ffffff;
+  --text-secondary:#c3c2b7;
+  --text-muted:    #898781;
+  --grid:          #2c2c2a;
+  --axis:          #383835;
+  --border:        rgba(255,255,255,0.10);
+  --border-strong: rgba(255,255,255,0.16);
+
+  --accent:        #3987e5;
+  --accent-wash:   rgba(57,135,229,0.14);
+
+  --s-type1:       #3987e5;
+  --s-type2:       #d95926;
+  --s-type3:       #199e70;
+  --s-type4:       #c98500;
+  --s-male:        #3987e5;
+  --s-female:      #d55181;
+  --s-neutral:     #4a4a47;
+  --s-neutral-tx:  #a6a49c;
+
+  --status-good:      #0ca30c;
+  --status-good-wash: rgba(12,163,12,0.16);
+  --status-critical:      #e66767;
+  --status-critical-wash: rgba(230,103,103,0.14);
+  --status-warning:       #fab219;
+  --status-warning-wash:  rgba(250,178,25,0.14);
+
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 2px 10px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--text-primary);
+  font-family:'Sarabun','Noto Sans Thai',system-ui,-apple-system,sans-serif;
+  font-size:14.5px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.num-display{font-family:'Noto Sans Thai','Sarabun',sans-serif;}
+::selection{background:var(--accent-wash);}
+a{color:var(--accent);}
+.wrap{max-width:1360px; margin:0 auto; padding:22px 22px 48px;}
+
+/* ---------- header ---------- */
+header.top{
+  display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+  flex-wrap:wrap; padding-bottom:16px; margin-bottom:18px; border-bottom:1px solid var(--border);
+}
+header.top .titleblock h1{
+  margin:0 0 4px; font-size:22px; font-weight:800; color:var(--text-primary);
+  text-wrap:balance; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+header.top .titleblock h1 .en{font-weight:500; font-size:14px; color:var(--text-muted);}
+header.top .titleblock .org{font-size:12.5px; color:var(--text-muted); letter-spacing:.02em;}
+.chip{
+  display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700;
+  padding:3px 9px; border-radius:999px; letter-spacing:.02em;
+}
+.chip.snapshot{background:var(--surface-2); color:var(--text-secondary); border:1px solid var(--border);}
+.chip.snapshot::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--status-good); display:inline-block;}
+header.top .meta{text-align:right; font-size:12.5px; color:var(--text-muted); display:flex; flex-direction:column; gap:4px; align-items:flex-end;}
+header.top .meta a{color:var(--text-secondary); text-decoration:underline; text-decoration-color:var(--border-strong);}
+
+/* ---------- filters ---------- */
+.filters{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
+  padding:14px 16px; margin-bottom:18px;
+  display:grid; grid-template-columns:repeat(7,minmax(0,1fr)) auto; gap:10px; align-items:end;
+}
+@media (max-width:1150px){ .filters{grid-template-columns:repeat(4,minmax(0,1fr)); } }
+@media (max-width:600px){ .filters{grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.filters .field{display:flex; flex-direction:column; gap:4px; min-width:0;}
+.filters label{font-size:11px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em;}
+.filters select, .filters input[type=date]{
+  font-family:inherit; font-size:13px; padding:7px 8px; border:1px solid var(--border-strong); border-radius:8px;
+  background:var(--surface); color:var(--text-primary); width:100%; height:34px;
+}
+.filters select:focus, .filters input:focus{outline:2px solid var(--accent); outline-offset:1px;}
+.filters button.reset{
+  height:34px; padding:0 14px; border-radius:8px; border:1px solid var(--accent); background:transparent;
+  color:var(--accent); font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;
+}
+.filters button.reset:hover{background:var(--accent-wash);}
+.filter-status{font-size:12px; color:var(--text-muted); margin:-6px 0 16px;}
+.filter-status b{color:var(--text-primary); font-weight:700;}
+
+/* ---------- KPI ---------- */
+.kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px;}
+@media (max-width:900px){ .kpis{grid-template-columns:repeat(2,1fr);} }
+.kpi{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
+  padding:16px 18px; border-top:3px solid var(--accent); position:relative;
+}
+.kpi.crit{border-top-color:var(--status-critical);}
+.kpi.warn{border-top-color:var(--status-warning);}
+.kpi.good{border-top-color:var(--status-good);}
+.kpi .label{font-size:12.5px; color:var(--text-muted); margin-bottom:8px; font-weight:600;}
+.kpi .value{font-size:32px; font-weight:800; line-height:1; color:var(--text-primary); font-variant-numeric:proportional-nums;}
+.kpi .value .unit{font-size:14px; font-weight:600; color:var(--text-muted); margin-left:4px;}
+.kpi .value .pct{font-size:15px; font-weight:700; margin-left:7px;}
+.kpi .value .pct.crit{color:var(--status-critical);}
+.kpi .note{font-size:12px; color:var(--text-muted); margin-top:8px; line-height:1.5;}
+.kpi .chiprow{display:flex; gap:6px; margin-top:9px; flex-wrap:wrap;}
+.mini-sero{display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700; color:var(--text-secondary); background:var(--surface-2); padding:2px 7px; border-radius:6px;}
+.mini-sero i{width:8px; height:8px; border-radius:2px; display:inline-block;}
+
+/* ---------- panels / grid ---------- */
+.grid2{display:grid; grid-template-columns:1.4fr 1fr; gap:14px; margin-bottom:14px;}
+@media (max-width:980px){ .grid2{grid-template-columns:1fr;} }
+.grid2b{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;}
+@media (max-width:980px){ .grid2b{grid-template-columns:1fr;} }
+
+.panel{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
+  padding:16px 18px 18px; display:flex; flex-direction:column;
+}
+.panel h2{font-size:14.5px; font-weight:700; margin:0 0 2px; color:var(--text-primary);}
+.panel .desc{font-size:12px; color:var(--text-muted); margin:0 0 14px;}
+.panel .empty{padding:30px 10px; text-align:center; color:var(--text-muted); font-size:13px;}
+
+/* legend */
+.legend{display:flex; gap:14px; flex-wrap:wrap; margin-top:12px; font-size:11.5px; color:var(--text-secondary);}
+.legend span{display:inline-flex; align-items:center; gap:5px;}
+.legend i{width:10px; height:10px; border-radius:3px; display:inline-block; flex:none;}
+.legend i.line{width:12px; height:2px; border-radius:1px;}
+
+/* ---------- HTML/CSS bar charts ---------- */
+.hbar-rows{display:flex; flex-direction:column; gap:10px;}
+.hbar-row{display:grid; grid-template-columns:112px 1fr 46px; align-items:center; gap:10px;}
+.hbar-row .rlabel{font-size:12.5px; color:var(--text-secondary); text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.hbar-track{position:relative; height:22px; background:var(--surface-2); border-radius:5px; overflow:hidden; display:flex;}
+.hbar-seg{height:100%; position:relative; cursor:pointer; transition:filter .12s ease;}
+.hbar-seg:hover, .hbar-seg:focus-visible{filter:brightness(1.08);}
+.hbar-seg:not(:last-child){border-right:2px solid var(--surface);}
+.hbar-row .rvalue{font-size:12.5px; font-weight:700; color:var(--text-primary); text-align:right; font-variant-numeric:tabular-nums;}
+
+.rank-rows{display:flex; flex-direction:column; gap:9px;}
+.rank-row{display:grid; grid-template-columns:1fr 3.4fr 30px; align-items:center; gap:9px;}
+.rank-row .rlabel{font-size:12.5px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.rank-track{height:16px; background:var(--surface-2); border-radius:5px; overflow:hidden;}
+.rank-fill{height:100%; border-radius:5px; background:var(--accent); min-width:3px;}
+.rank-row .rvalue{font-size:12px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums;}
+
+/* pyramid */
+.pyramid-rows{display:flex; flex-direction:column; gap:10px;}
+.pyramid-row{display:grid; grid-template-columns:1fr 74px 1fr; align-items:center; gap:8px;}
+.pyr-side{height:20px; display:flex; align-items:center; position:relative;}
+.pyr-side.left{justify-content:flex-end;}
+.pyr-side.right{justify-content:flex-start;}
+.pyr-bar{height:100%; border-radius:5px; min-width:3px; cursor:pointer;}
+.pyr-bar.m{background:var(--s-male);}
+.pyr-bar.f{background:var(--s-female);}
+.pyr-agelabel{font-size:11.5px; color:var(--text-muted); text-align:center; font-weight:600;}
+.pyr-val{position:absolute; font-size:11px; font-weight:700; color:var(--text-secondary); white-space:nowrap;}
+.pyr-side.left .pyr-val{right:calc(100% + 6px);}
+.pyr-side.right .pyr-val{left:calc(100% + 6px);}
+
+/* epi trend (vertical stacked columns) */
+.vbar-chart{display:flex; align-items:flex-end; gap:8px; height:190px; padding-top:20px; position:relative;}
+.vbar-chart::before{content:""; position:absolute; left:0; right:0; bottom:26px; height:1px; background:var(--axis);}
+.vbar-col{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:6px;}
+.vbar-stack{width:100%; max-width:38px; display:flex; flex-direction:column-reverse; justify-content:flex-start; border-radius:4px 4px 0 0; overflow:hidden; cursor:pointer;}
+.vbar-seg{width:100%;}
+.vbar-total{font-size:11.5px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums;}
+.vbar-xlabel{font-size:11px; color:var(--text-muted); margin-top:2px;}
+
+/* tooltip */
+.viz-tooltip{
+  position:fixed; z-index:60; pointer-events:none; background:var(--text-primary); color:var(--bg);
+  font-size:12px; line-height:1.5; padding:8px 10px; border-radius:8px; box-shadow:var(--shadow);
+  max-width:240px; opacity:0; transform:translateY(4px); transition:opacity .1s ease, transform .1s ease;
+}
+.viz-tooltip.show{opacity:1; transform:translateY(0);}
+.viz-tooltip .tt-title{font-weight:700; margin-bottom:3px;}
+.viz-tooltip .tt-row{display:flex; align-items:center; gap:6px; justify-content:space-between; gap:12px;}
+.viz-tooltip .tt-row + .tt-row{margin-top:2px;}
+.viz-tooltip .tt-key{display:inline-flex; align-items:center; gap:5px; opacity:.85;}
+.viz-tooltip .tt-key i{width:8px; height:8px; border-radius:2px; display:inline-block;}
+.viz-tooltip .tt-strong{font-weight:700; font-variant-numeric:tabular-nums;}
+
+/* ---------- table ---------- */
+.table-panel{margin-bottom:14px;}
+.table-toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;}
+.table-scroll{overflow-x:auto; border:1px solid var(--border); border-radius:10px;}
+table.data{width:100%; border-collapse:collapse; font-size:12.5px; min-width:920px;}
+table.data thead th{
+  position:sticky; top:0; background:var(--surface-2); text-align:left; font-weight:700; color:var(--text-secondary);
+  padding:9px 10px; border-bottom:1px solid var(--border); white-space:nowrap; cursor:pointer; user-select:none;
+}
+table.data thead th:hover{color:var(--text-primary);}
+table.data thead th .arrow{opacity:.4; margin-left:3px; font-size:10px;}
+table.data thead th.sorted .arrow{opacity:1; color:var(--accent);}
+table.data tbody td{padding:8px 10px; border-bottom:1px solid var(--border); color:var(--text-secondary); vertical-align:top;}
+table.data tbody tr:last-child td{border-bottom:none;}
+table.data tbody tr:hover{background:var(--surface-2);}
+table.data td.num{font-variant-numeric:tabular-nums; text-align:right;}
+table.data td.strong{color:var(--text-primary); font-weight:600;}
+.pill{display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; white-space:nowrap;}
+.pill.pos{background:var(--status-critical-wash); color:var(--status-critical);}
+.pill.neg{background:var(--status-good-wash); color:var(--status-good);}
+.pill.na{background:var(--surface-2); color:var(--text-muted);}
+.sero-chip{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700;}
+.sero-chip i{width:8px; height:8px; border-radius:2px; display:inline-block;}
+.sym-icons{display:flex; gap:4px; flex-wrap:wrap; max-width:160px;}
+.sym-tag{font-size:10.5px; padding:1px 6px; border-radius:5px; background:var(--surface-2); color:var(--text-secondary); white-space:nowrap;}
+
+/* ---------- footer ---------- */
+footer{margin-top:20px; padding-top:16px; border-top:1px solid var(--border); font-size:12px; color:var(--text-muted); line-height:1.75;}
+footer h3{font-size:12.5px; color:var(--text-secondary); margin:0 0 6px; font-weight:700;}
+footer .foot-grid{display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:22px; margin-bottom:14px;}
+@media (max-width:800px){ footer .foot-grid{grid-template-columns:1fr;} }
+footer b{color:var(--text-secondary);}
+footer .fine{font-size:11.5px; color:var(--text-muted); padding-top:10px; border-top:1px solid var(--border);}
+footer code{background:var(--surface-2); padding:1px 5px; border-radius:4px; font-size:11px;}
+
+.sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="titleblock">
+      <h1>เฝ้าระวังโรคไข้เลือดออก (Serotype) <span class="en">Dengue Serotype Surveillance</span> <span class="chip snapshot" id="modeChip">ข้อมูลล่าสุด</span></h1>
+      <div class="org">เขตสุขภาพที่ 10 (อุบลราชธานี · ศรีสะเกษ · ยโสธร · อำนาจเจริญ · มุกดาหาร) — กรมควบคุมโรค (DDC)</div>
+    </div>
+    <div class="meta">
+      <div>ข้อมูล ณ วันที่ <b id="asOfDate" style="color:var(--text-secondary)">-</b></div>
+      <div>แหล่งข้อมูล: <a href="https://docs.google.com/spreadsheets/d/1NTxcQvNkjdfq8vX_-1gcXa0fJjwGr4NO2XInzNcUV0Q/edit" target="_blank" rel="noopener">Google Sheets (ชีต serotype)</a></div>
+    </div>
+  </header>
+
+  <div class="filters">
+    <div class="field">
+      <label for="fDateFrom">วันเริ่มป่วย (จาก)</label>
+      <input type="date" id="fDateFrom">
+    </div>
+    <div class="field">
+      <label for="fDateTo">วันเริ่มป่วย (ถึง)</label>
+      <input type="date" id="fDateTo">
+    </div>
+    <div class="field">
+      <label for="fProvince">จังหวัด</label>
+      <select id="fProvince"><option value="">ทั้งหมด</option></select>
+    </div>
+    <div class="field">
+      <label for="fAmphoe">อำเภอ</label>
+      <select id="fAmphoe"><option value="">ทั้งหมด</option></select>
+    </div>
+    <div class="field">
+      <label for="fMethod">วิธีตรวจคัดกรอง</label>
+      <select id="fMethod"><option value="">ทั้งหมด</option></select>
+    </div>
+    <div class="field">
+      <label for="fResult">ผลตรวจ PCR</label>
+      <select id="fResult"><option value="">ทั้งหมด</option></select>
+    </div>
+    <div class="field">
+      <label for="fSerotype">Serotype</label>
+      <select id="fSerotype"><option value="">ทั้งหมด</option></select>
+    </div>
+    <div class="field" style="justify-content:flex-end;">
+      <button class="reset" id="btnReset" type="button">ล้างตัวกรอง</button>
+    </div>
+  </div>
+  <div class="filter-status" id="filterStatus"></div>
+
+  <div class="kpis">
+    <div class="kpi">
+      <div class="label">ตัวอย่างส่งตรวจ Serotype ทั้งหมด</div>
+      <div class="value" id="kpiTotal">-</div>
+      <div class="note">จำนวนราย ที่เข้าเกณฑ์สอบสวนโรคและส่งตรวจทางห้องปฏิบัติการ (หลังกรอง)</div>
+    </div>
+    <div class="kpi crit">
+      <div class="label">ยืนยันไข้เลือดออก (PCR Positive)</div>
+      <div class="value"><span id="kpiPositive">-</span><span class="pct crit" id="kpiPositivePct"></span></div>
+      <div class="note">อัตรายืนยันผลบวกจากตัวอย่างที่ส่งตรวจ PCR ทั้งหมด</div>
+    </div>
+    <div class="kpi warn">
+      <div class="label">Serotype ที่ตรวจพบ</div>
+      <div class="value" id="kpiSerotypes">-</div>
+      <div class="chiprow" id="kpiSeroChips"></div>
+    </div>
+    <div class="kpi good">
+      <div class="label">ระยะเวลาเฉลี่ยก่อนวินิจฉัย</div>
+      <div class="value" id="kpiDays">-<span class="unit">วัน</span></div>
+      <div class="note" id="kpiDaysNote">คำนวณจาก [วันที่วินิจฉัย − วันเริ่มป่วย]</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h2>การกระจายผู้ป่วยตามจังหวัด แยกตาม Serotype</h2>
+      <div class="desc">เรียงจากจังหวัดที่พบผู้ส่งตรวจมากที่สุด — สีแสดงสายพันธุ์ที่ยืนยันด้วย PCR</div>
+      <div class="hbar-rows" id="provinceChart"></div>
+      <div class="legend" id="provinceLegend"></div>
+    </div>
+    <div class="panel">
+      <h2>อำเภอที่พบผู้ป่วยสูงสุด</h2>
+      <div class="desc">10 อันดับอำเภอ ตามจำนวนตัวอย่างส่งตรวจ</div>
+      <div class="rank-rows" id="districtChart"></div>
+    </div>
+  </div>
+
+  <div class="grid2b">
+    <div class="panel">
+      <h2>กลุ่มอายุและเพศ (Population Pyramid)</h2>
+      <div class="desc">จำนวนผู้ป่วยแยกตามกลุ่มอายุและเพศ</div>
+      <div class="pyramid-rows" id="pyramidChart"></div>
+      <div class="legend">
+        <span><i style="background:var(--s-male)"></i>ชาย</span>
+        <span><i style="background:var(--s-female)"></i>หญิง</span>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>อาการแสดงที่พบบ่อย</h2>
+      <div class="desc">ร้อยละของผู้ป่วยที่มีอาการ (จากผู้ป่วยที่มีการบันทึกอาการ)</div>
+      <div class="rank-rows" id="symptomChart"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:14px;">
+    <h2>แนวโน้มผู้ป่วยรายเดือน (ม.ค.–ส.ค. 2569)</h2>
+    <div class="desc">นับตามวันเริ่มป่วย (onset date) แยกสีตามผลยืนยัน PCR</div>
+    <div class="vbar-chart" id="epiChart"></div>
+    <div class="legend">
+      <span><i style="background:var(--status-critical)"></i>ยืนยันบวก (PCR Positive)</span>
+      <span><i style="background:var(--s-neutral)"></i>ไม่ยืนยัน / PCR Negative</span>
+    </div>
+  </div>
+
+  <div class="panel table-panel">
+    <div class="table-toolbar">
+      <div>
+        <h2 style="margin-bottom:2px;">รายการผู้ป่วยรายบุคคล</h2>
+        <div class="desc" style="margin-bottom:0;">คลิกหัวตาราง เพื่อเรียงลำดับ — ตารางนี้ตอบสนองต่อตัวกรองด้านบน</div>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="data" id="dataTable">
+        <thead>
+          <tr>
+            <th data-key="id">ลำดับ<span class="arrow">↕</span></th>
+            <th data-key="onset">วันเริ่มป่วย<span class="arrow">↕</span></th>
+            <th data-key="diag">วันวินิจฉัย<span class="arrow">↕</span></th>
+            <th data-key="province">จังหวัด<span class="arrow">↕</span></th>
+            <th data-key="amphoe">อำเภอ / ตำบล<span class="arrow">↕</span></th>
+            <th data-key="sex">เพศ/อายุ<span class="arrow">↕</span></th>
+            <th data-key="occupation">อาชีพ<span class="arrow">↕</span></th>
+            <th data-key="rapid">คัดกรอง</th>
+            <th data-key="pcr">ผล PCR<span class="arrow">↕</span></th>
+            <th data-key="serotype">Serotype<span class="arrow">↕</span></th>
+            <th data-key="symptoms">อาการเด่น</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <div class="foot-grid">
+      <div>
+        <h3>เกี่ยวกับข้อมูล</h3>
+        ข้อมูลผลการตรวจ Serotype โรคไข้เลือดออก เขตสุขภาพที่ 10 นับรวมทั้งผู้ป่วยที่ผล PCR เป็นบวกและลบ ตามเกณฑ์การสอบสวนโรคที่ส่งตรวจยืนยันทางห้องปฏิบัติการ (สคร.10) จัดทำจากไฟล์ <code>69-แบบเก็บข้อมูล Lab_270769.xlsx</code> (ชีต "serotype") และปรับปรุงให้ตรงกับ Google Sheets ต้นทาง ณ วันที่จัดทำ
+      </div>
+      <div>
+        <h3>คำนิยาม</h3>
+        <b>ยืนยัน (Confirmed)</b> = ผล PCR เป็น Positive · <b>rapid test</b> = การตรวจคัดกรองเบื้องต้น (NS1) · ระยะก่อนวินิจฉัย = วันที่วินิจฉัย − วันเริ่มป่วย
+      </div>
+      <div>
+        <h3>ข้อควรระวัง</h3>
+        จำนวนตัวอย่างในระบบยังน้อย (n = <span id="footN">24</span> ราย) ค่าร้อยละและแนวโน้มจึงอาจแปรผันสูงเมื่อมีข้อมูลใหม่เพิ่มเติม ควรใช้ประกอบการพิจารณาร่วมกับข้อมูลเชิงพื้นที่อื่น ๆ
+      </div>
+    </div>
+    <div class="fine">
+      จัดทำเพื่อ DDDC · ปรับปรุงล่าสุด <span id="buildDate">-</span> · หากมีข้อมูลใหม่ในชีต Google Sheets กรุณาแจ้งเพื่อปรับปรุงแดชบอร์ดให้เป็นปัจจุบัน
+    </div>
+  </footer>
+
+</div>
+
+<div class="viz-tooltip" id="tooltip" role="tooltip"></div>
+
+<script>
+/* ============================================================
+   ข้อมูล — ตรวจสอบตรงกับ Google Sheets ต้นทางและไฟล์ต้นฉบับแล้ว (n=24)
+   แหล่ง: ชีต "serotype" ใน 69-แบบเก็บข้อมูล Lab_270769.xlsx
+   ============================================================ */
+const DATA = [
+{"id":1,"sex":2,"ageY":64,"occupation":"แม่บ้าน","tambon":"ไร่น้อย","amphoe":"เมืองอุบลราชธานี","province":"อุบลราชธานี","rapid":"NS1","result":"Positive","pcr":"Negative","serotype":null,"onset":"2026-01-27","diag":"2026-01-29","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":null},
+{"id":2,"sex":2,"ageY":26,"occupation":"ว่างงาน","tambon":"จิกเทิง","amphoe":"ตาลสุม","province":"อุบลราชธานี","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 2","onset":"2026-01-30","diag":"2026-02-03","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"มี","retroorbital":"ไม่มี","other":"เบื่ออาหาร, ท้องเสีย"},
+{"id":3,"sex":2,"ageY":9,"occupation":"นักเรียน","tambon":"ขามใหญ่","amphoe":"เมืองอุบลราชธานี","province":"อุบลราชธานี","rapid":null,"result":null,"pcr":"Negative","serotype":null,"onset":"2026-02-15","diag":"2026-02-20","fever":"ไม่มี","headache":"ไม่มี","myalgia":"ไม่มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":"ผื่นแดง, ตาแดง"},
+{"id":4,"sex":1,"ageY":9,"occupation":"นักเรียน","tambon":"ตบหู","amphoe":"เดชอุดม","province":"อุบลราชธานี","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 2","onset":"2026-03-08","diag":"2026-03-10","fever":"มี","headache":"มี","myalgia":"ไม่มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":"อ่อนเพลีย, ทานได้น้อย"},
+{"id":5,"sex":1,"ageY":55,"occupation":"ข้าราชการ","tambon":"หนองบัวฮี","amphoe":"พิบูลมังสาหาร","province":"อุบลราชธานี","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 3","onset":"2026-03-30","diag":"2026-04-01","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"มี","retroorbital":"มี","other":"ผื่นแดง"},
+{"id":6,"sex":1,"ageY":74,"occupation":"ไม่ทราบ","tambon":"บัวงาม","amphoe":"บุณฑริก","province":"อุบลราชธานี","rapid":"NS1","result":"Negative","pcr":"Negative","serotype":null,"onset":"2026-04-27","diag":"2026-04-30","fever":"ไม่มี","headache":"ไม่มี","myalgia":"มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":null},
+{"id":7,"sex":2,"ageY":12,"occupation":"นักเรียน","tambon":"นาห่อม","amphoe":"ทุ่งศรีอุดม","province":"อุบลราชธานี","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 2","onset":"2026-05-30","diag":"2026-05-31","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"ไม่มี","retroorbital":"มี","other":null},
+{"id":8,"sex":2,"ageY":11,"occupation":"นักเรียน","tambon":"นาจะหลวย","amphoe":"นาจะหลวย","province":"อุบลราชธานี","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 2","onset":"2026-06-04","diag":"2026-06-06","fever":"มี","headache":"ไม่มี","myalgia":"ไม่มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":null},
+{"id":9,"sex":2,"ageY":15,"occupation":"นักเรียน","tambon":"หนองไฮ","amphoe":"สำโรง","province":"อุบลราชธานี","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 2","onset":"2026-06-05","diag":"2026-06-11","fever":"มี","headache":"มี","myalgia":"ไม่มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":"คลื่นไส้, อาเจียน"},
+{"id":10,"sex":2,"ageY":12,"occupation":"นักเรียน","tambon":"กาบิน","amphoe":"กุดข้าวปุ้น","province":"อุบลราชธานี","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 1","onset":"2026-06-18","diag":"2026-06-19","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":null},
+{"id":11,"sex":1,"ageY":30,"occupation":"บุคลากรทางการแพทย์","tambon":"นาคำ","amphoe":"ศรีเมืองใหม่","province":"อุบลราชธานี","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 2","onset":"2026-07-02","diag":"2026-07-03","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":null},
+{"id":12,"sex":2,"ageY":44,"occupation":"บุคลากรทางการแพทย์","tambon":"บุสูง","amphoe":"วังหิน","province":"ศรีสะเกษ","rapid":"NS1","result":"Negative","pcr":"Negative","serotype":null,"onset":"2026-03-12","diag":"2026-03-19","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"มี","retroorbital":"มี","other":"ผื่นแดง"},
+{"id":13,"sex":2,"ageY":13,"occupation":"นักเรียน","tambon":"โนนคูณ","amphoe":"ยางชุมน้อย","province":"ศรีสะเกษ","rapid":"NS1","result":"Negative","pcr":"Positive","serotype":"Type 4","onset":"2026-05-31","diag":"2026-05-31","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"ไม่มี","retroorbital":"มี","other":"อาเจียน"},
+{"id":14,"sex":2,"ageY":36,"occupation":"รับจ้าง","tambon":"โนนคูณ","amphoe":"ยางชุมน้อย","province":"ศรีสะเกษ","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 4","onset":"2026-05-25","diag":"2026-05-26","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"ไม่มี","retroorbital":"มี","other":"อาเจียน"},
+{"id":15,"sex":1,"ageY":10,"occupation":"นักเรียน","tambon":"โนนคูณ","amphoe":"ยางชุมน้อย","province":"ศรีสะเกษ","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 4","onset":"2026-05-25","diag":"2026-05-28","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"ไม่มี","retroorbital":"มี","other":"อาเจียน"},
+{"id":16,"sex":1,"ageY":19,"occupation":"สามเณร","tambon":null,"amphoe":"ยางชุมน้อย","province":"ศรีสะเกษ","rapid":null,"result":null,"pcr":"Negative","serotype":null,"onset":null,"diag":null,"fever":null,"headache":null,"myalgia":null,"arthralgia":null,"retroorbital":null,"other":"จ่ายเงินเอง ไม่มีแบบสอบสวนโรค"},
+{"id":17,"sex":1,"ageY":18,"occupation":"ว่างงาน","tambon":"คำน้ำสร้าง","amphoe":"กุดชุม","province":"ยโสธร","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 1","onset":"2026-05-18","diag":"2026-05-22","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":null},
+{"id":18,"sex":1,"ageY":13,"occupation":"นักเรียน","tambon":"คำน้ำสร้าง","amphoe":"กุดชุม","province":"ยโสธร","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 1","onset":"2026-05-21","diag":"2026-05-21","fever":"มี","headache":"ไม่มี","myalgia":"มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":"น้ำมูก"},
+{"id":19,"sex":1,"ageY":7,"occupation":"นักเรียน","tambon":"บุ่ง","amphoe":"เมืองอำนาจเจริญ","province":"อำนาจเจริญ","rapid":"NS1","result":"Negative","pcr":"Negative","serotype":null,"onset":"2026-06-03","diag":"2026-06-06","fever":"มี","headache":"ไม่มี","myalgia":"ไม่มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":"อาเจียน"},
+{"id":20,"sex":1,"ageY":23,"occupation":"รับจ้าง","tambon":"นาคำ","amphoe":"ศรีเมืองใหม่","province":"อุบลราชธานี","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 2","onset":"2026-06-03","diag":"2026-06-05","fever":"มี","headache":"มี","myalgia":"ไม่มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":"ผื่นแดง, ตาแดง"},
+{"id":21,"sex":1,"ageY":39,"occupation":"เกษตรกร","tambon":"คันไร่","amphoe":"สิรินธร","province":"อุบลราชธานี","rapid":"NS1","result":"Negative","pcr":"Negative","serotype":null,"onset":"2026-06-11","diag":"2026-06-13","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"มี","retroorbital":"มี","other":"ตับโต"},
+{"id":22,"sex":2,"ageY":29,"occupation":"รับจ้าง","tambon":"ทรายมูล","amphoe":"ทรายมูล","province":"ยโสธร","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 1","onset":"2026-06-12","diag":"2026-06-14","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"มี","retroorbital":"มี","other":"อาการ URI"},
+{"id":23,"sex":1,"ageY":13,"occupation":"สามเณร","tambon":"ทรายมูล","amphoe":"ทรายมูล","province":"ยโสธร","rapid":"NS1","result":"Negative","pcr":"Negative","serotype":null,"onset":"2026-06-13","diag":"2026-06-13","fever":"มี","headache":"มี","myalgia":"ไม่มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":"อาการ URI"},
+{"id":24,"sex":1,"ageY":13,"occupation":"นักเรียน","tambon":"บ้านเหล่า","amphoe":"คำชะอี","province":"มุกดาหาร","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 2","onset":"2026-08-20","diag":"2026-08-24","fever":null,"headache":"มี","myalgia":"มี","arthralgia":null,"retroorbital":"มี","other":"เหนื่อย เพลีย วูบ ก่อนมา รพ 22/8/69"}
+];
+
+const SEROTYPE_ORDER = ["Type 1","Type 2","Type 3","Type 4"];
+const SEROTYPE_COLOR = {
+  "Type 1": () => cssVar('--s-type1'),
+  "Type 2": () => cssVar('--s-type2'),
+  "Type 3": () => cssVar('--s-type3'),
+  "Type 4": () => cssVar('--s-type4'),
+  "none":   () => cssVar('--s-neutral'),
+};
+const AGE_BINS = [
+  {label:"0–14 ปี", min:0, max:14},
+  {label:"15–24 ปี", min:15, max:24},
+  {label:"25–59 ปี", min:25, max:59},
+  {label:"60+ ปี", min:60, max:999},
+];
+const SYMPTOM_FIELDS = [
+  {key:"fever", label:"ไข้ > 38°C"},
+  {key:"headache", label:"ปวดศีรษะ"},
+  {key:"myalgia", label:"ปวดกล้ามเนื้อ"},
+  {key:"retroorbital", label:"ปวดกระบอกตา"},
+  {key:"arthralgia", label:"ปวดข้อ/กระดูก"},
+  {key:"rash", label:"ผื่นแดง/ตาแดง*"},
+];
+const MONTHS_TH = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function beDate(iso){
+  if(!iso) return "-";
+  const d = new Date(iso+"T00:00:00");
+  return `${d.getDate()} ${MONTHS_TH[d.getMonth()]} ${d.getFullYear()+543}`;
+}
+function beDateShort(iso){
+  if(!iso) return "-";
+  const d = new Date(iso+"T00:00:00");
+  return `${d.getDate()} ${MONTHS_TH[d.getMonth()]} ${String(d.getFullYear()+543).slice(-2)}`;
+}
+function hasRash(r){ return !!(r.other && /ผื่น|ตาแดง|แดง/.test(r.other)); }
+
+/* ---------------- tooltip ---------------- */
+const tooltipEl = document.getElementById('tooltip');
+function showTooltip(evt, html){
+  tooltipEl.innerHTML = html;
+  tooltipEl.classList.add('show');
+  positionTooltip(evt);
+}
+function positionTooltip(evt){
+  const pad = 14;
+  let x = evt.clientX + pad, y = evt.clientY + pad;
+  const rect = tooltipEl.getBoundingClientRect();
+  if(x + rect.width > window.innerWidth - 8) x = evt.clientX - rect.width - pad;
+  if(y + rect.height > window.innerHeight - 8) y = evt.clientY - rect.height - pad;
+  tooltipEl.style.left = x + 'px';
+  tooltipEl.style.top = y + 'px';
+}
+function hideTooltip(){ tooltipEl.classList.remove('show'); }
+function wireTooltip(el, htmlFn){
+  el.addEventListener('mousemove', (e)=>showTooltip(e, htmlFn()));
+  el.addEventListener('mouseenter', (e)=>showTooltip(e, htmlFn()));
+  el.addEventListener('mouseleave', hideTooltip);
+  el.addEventListener('focus', (e)=>{
+    const r = el.getBoundingClientRect();
+    showTooltip({clientX:r.left+r.width/2, clientY:r.top}, htmlFn());
+  });
+  el.addEventListener('blur', hideTooltip);
+}
+
+/* ---------------- filters ---------------- */
+function uniqueSorted(arr){ return [...new Set(arr.filter(v=>v!==null && v!==undefined && v!==''))].sort((a,b)=>String(a).localeCompare(String(b),'th')); }
+
+function populateFilters(){
+  const provSel = document.getElementById('fProvince');
+  uniqueSorted(DATA.map(r=>r.province)).forEach(p=>{
+    const o=document.createElement('option'); o.value=p; o.textContent=p; provSel.appendChild(o);
+  });
+  const methodSel = document.getElementById('fMethod');
+  uniqueSorted(DATA.map(r=>r.rapid)).forEach(m=>{
+    const o=document.createElement('option'); o.value=m; o.textContent=m; methodSel.appendChild(o);
+  });
+  const resultSel = document.getElementById('fResult');
+  uniqueSorted(DATA.map(r=>r.pcr)).forEach(v=>{
+    const o=document.createElement('option'); o.value=v; o.textContent = v==="Positive" ? "Positive (ยืนยัน)" : "Negative (ไม่ยืนยัน)"; resultSel.appendChild(o);
+  });
+  const seroSel = document.getElementById('fSerotype');
+  SEROTYPE_ORDER.filter(s => DATA.some(r=>r.serotype===s)).forEach(s=>{
+    const o=document.createElement('option'); o.value=s; o.textContent=s; seroSel.appendChild(o);
+  });
+  const oNone = document.createElement('option'); oNone.value="none"; oNone.textContent="ไม่ระบุ / ไม่พบ"; seroSel.appendChild(oNone);
+
+  const dates = DATA.map(r=>r.onset).filter(Boolean).sort();
+  document.getElementById('fDateFrom').value = dates[0];
+  document.getElementById('fDateTo').value = dates[dates.length-1];
+
+  refreshAmphoeOptions();
+}
+function refreshAmphoeOptions(){
+  const prov = document.getElementById('fProvince').value;
+  const sel = document.getElementById('fAmphoe');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">ทั้งหมด</option>';
+  uniqueSorted(DATA.filter(r=>!prov || r.province===prov).map(r=>r.amphoe)).forEach(a=>{
+    const o=document.createElement('option'); o.value=a; o.textContent=a; sel.appendChild(o);
+  });
+  if([...sel.options].some(o=>o.value===current)) sel.value = current;
+}
+function getFiltered(){
+  const from = document.getElementById('fDateFrom').value;
+  const to = document.getElementById('fDateTo').value;
+  const prov = document.getElementById('fProvince').value;
+  const amp = document.getElementById('fAmphoe').value;
+  const method = document.getElementById('fMethod').value;
+  const result = document.getElementById('fResult').value;
+  const sero = document.getElementById('fSerotype').value;
+  return DATA.filter(r=>{
+    if(from && r.onset && r.onset < from) return false;
+    if(to && r.onset && r.onset > to) return false;
+    if(prov && r.province !== prov) return false;
+    if(amp && r.amphoe !== amp) return false;
+    if(method && r.rapid !== method) return false;
+    if(result && r.pcr !== result) return false;
+    if(sero){
+      if(sero==="none"){ if(r.serotype) return false; }
+      else if(r.serotype !== sero) return false;
+    }
+    return true;
+  });
+}
+
+/* ---------------- renderers ---------------- */
+let sortKey = 'id', sortDir = 1;
+
+function renderKPIs(rows){
+  document.getElementById('kpiTotal').textContent = rows.length;
+  const confirmed = rows.filter(r=>r.pcr==="Positive");
+  document.getElementById('kpiPositive').textContent = confirmed.length;
+  document.getElementById('kpiPositivePct').textContent = rows.length ? `(${(confirmed.length/rows.length*100).toFixed(1)}%)` : '(–)';
+
+  const seroCounts = {};
+  confirmed.forEach(r=>{ if(r.serotype) seroCounts[r.serotype] = (seroCounts[r.serotype]||0)+1; });
+  const seroTypesFound = SEROTYPE_ORDER.filter(s=>seroCounts[s]);
+  document.getElementById('kpiSerotypes').textContent = seroTypesFound.length ? `${seroTypesFound.length} สายพันธุ์` : '–';
+  const chipWrap = document.getElementById('kpiSeroChips');
+  chipWrap.innerHTML = '';
+  seroTypesFound.sort((a,b)=>seroCounts[b]-seroCounts[a]).forEach(s=>{
+    const c = document.createElement('span'); c.className='mini-sero';
+    const i = document.createElement('i'); i.style.background = SEROTYPE_COLOR[s]();
+    c.appendChild(i); c.appendChild(document.createTextNode(`${s.replace('Type ','T')} · ${seroCounts[s]}`));
+    chipWrap.appendChild(c);
+  });
+  if(!seroTypesFound.length){ chipWrap.innerHTML = '<span class="mini-sero">ไม่พบข้อมูล</span>'; }
+
+  const withDates = rows.filter(r=>r.onset && r.diag);
+  const daysEl = document.getElementById('kpiDays');
+  if(withDates.length){
+    const total = withDates.reduce((s,r)=> s + (new Date(r.diag)-new Date(r.onset))/86400000, 0);
+    daysEl.innerHTML = `${(total/withDates.length).toFixed(1)}<span class="unit">วัน</span>`;
+  } else {
+    daysEl.innerHTML = `-<span class="unit">วัน</span>`;
+  }
+  document.getElementById('kpiDaysNote').textContent = `คำนวณจาก [วันวินิจฉัย − วันเริ่มป่วย], n=${withDates.length} ราย`;
+}
+
+function renderProvinceChart(rows){
+  const container = document.getElementById('provinceChart');
+  container.innerHTML = '';
+  if(!rows.length){ container.innerHTML = '<div class="empty">ไม่มีข้อมูลตรงตามตัวกรอง</div>'; document.getElementById('provinceLegend').innerHTML=''; return; }
+
+  const provinces = {};
+  rows.forEach(r=>{
+    if(!provinces[r.province]) provinces[r.province] = {total:0, seg:{"Type 1":0,"Type 2":0,"Type 3":0,"Type 4":0,"none":0}};
+    provinces[r.province].total++;
+    const key = (r.pcr==="Positive" && r.serotype) ? r.serotype : "none";
+    provinces[r.province].seg[key]++;
+  });
+  const order = Object.entries(provinces).sort((a,b)=>b[1].total-a[1].total);
+  const max = order[0][1].total;
+  const segKeys = [...SEROTYPE_ORDER, "none"];
+  const segLabel = {"Type 1":"Type 1","Type 2":"Type 2","Type 3":"Type 3","Type 4":"Type 4","none":"ไม่ยืนยัน/PCR ลบ"};
+
+  order.forEach(([prov, info])=>{
+    const row = document.createElement('div'); row.className='hbar-row';
+    const lab = document.createElement('div'); lab.className='rlabel'; lab.textContent=prov; lab.title=prov;
+    const track = document.createElement('div'); track.className='hbar-track';
+    segKeys.forEach(k=>{
+      const n = info.seg[k];
+      if(!n) return;
+      const seg = document.createElement('div'); seg.className='hbar-seg';
+      seg.style.width = (n/max*100)+'%';
+      seg.style.background = SEROTYPE_COLOR[k]();
+      seg.tabIndex = 0;
+      seg.setAttribute('aria-label', `${prov} · ${segLabel[k]} · ${n} ราย`);
+      wireTooltip(seg, ()=>`<div class="tt-title">${prov}</div><div class="tt-row"><span class="tt-key"><i style="background:${SEROTYPE_COLOR[k]()}"></i>${segLabel[k]}</span><span class="tt-strong">${n} ราย</span></div>`);
+      track.appendChild(seg);
+    });
+    const val = document.createElement('div'); val.className='rvalue'; val.textContent = info.total;
+    row.appendChild(lab); row.appendChild(track); row.appendChild(val);
+    container.appendChild(row);
+  });
+
+  const legend = document.getElementById('provinceLegend');
+  legend.innerHTML = '';
+  segKeys.forEach(k=>{
+    if(!order.some(([,info])=>info.seg[k]>0)) return;
+    const span = document.createElement('span');
+    const i = document.createElement('i'); i.style.background = SEROTYPE_COLOR[k]();
+    span.appendChild(i); span.appendChild(document.createTextNode(segLabel[k]));
+    legend.appendChild(span);
+  });
+}
+
+function renderDistrictChart(rows){
+  const container = document.getElementById('districtChart');
+  container.innerHTML = '';
+  if(!rows.length){ container.innerHTML = '<div class="empty">ไม่มีข้อมูล</div>'; return; }
+  const counts = {};
+  rows.forEach(r=>{ counts[r.amphoe] = (counts[r.amphoe]||0)+1; });
+  const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const max = entries[0][1];
+  entries.forEach(([amphoe, n])=>{
+    const row = document.createElement('div'); row.className='rank-row';
+    const lab = document.createElement('div'); lab.className='rlabel'; lab.textContent = amphoe; lab.title = amphoe;
+    const track = document.createElement('div'); track.className='rank-track';
+    const fill = document.createElement('div'); fill.className='rank-fill'; fill.style.width=(n/max*100)+'%';
+    fill.tabIndex = 0; fill.setAttribute('aria-label', `อำเภอ${amphoe} ${n} ราย`);
+    wireTooltip(fill, ()=>`<div class="tt-title">อ.${amphoe}</div><div class="tt-row"><span class="tt-key">ตัวอย่างส่งตรวจ</span><span class="tt-strong">${n} ราย</span></div>`);
+    track.appendChild(fill);
+    const val = document.createElement('div'); val.className='rvalue'; val.textContent = n;
+    row.appendChild(lab); row.appendChild(track); row.appendChild(val);
+    container.appendChild(row);
+  });
+}
+
+function renderPyramid(rows){
+  const container = document.getElementById('pyramidChart');
+  container.innerHTML = '';
+  const male = AGE_BINS.map(b=>rows.filter(r=>r.sex===1 && r.ageY!=null && r.ageY>=b.min && r.ageY<=b.max).length);
+  const female = AGE_BINS.map(b=>rows.filter(r=>r.sex===2 && r.ageY!=null && r.ageY>=b.min && r.ageY<=b.max).length);
+  const max = Math.max(1, ...male, ...female);
+  AGE_BINS.forEach((bin,i)=>{
+    const row = document.createElement('div'); row.className='pyramid-row';
+    const left = document.createElement('div'); left.className='pyr-side left';
+    if(male[i]>0){
+      const bar = document.createElement('div'); bar.className='pyr-bar m'; bar.style.width=(male[i]/max*100)+'%';
+      bar.tabIndex=0; bar.setAttribute('aria-label', `ชาย ${bin.label} ${male[i]} ราย`);
+      wireTooltip(bar, ()=>`<div class="tt-title">${bin.label}</div><div class="tt-row"><span class="tt-key"><i style="background:${cssVar('--s-male')}"></i>ชาย</span><span class="tt-strong">${male[i]} ราย</span></div>`);
+      const v = document.createElement('span'); v.className='pyr-val'; v.textContent = male[i];
+      left.appendChild(v); left.appendChild(bar);
+    }
+    const agelabel = document.createElement('div'); agelabel.className='pyr-agelabel'; agelabel.textContent = bin.label;
+    const right = document.createElement('div'); right.className='pyr-side right';
+    if(female[i]>0){
+      const bar = document.createElement('div'); bar.className='pyr-bar f'; bar.style.width=(female[i]/max*100)+'%';
+      bar.tabIndex=0; bar.setAttribute('aria-label', `หญิง ${bin.label} ${female[i]} ราย`);
+      wireTooltip(bar, ()=>`<div class="tt-title">${bin.label}</div><div class="tt-row"><span class="tt-key"><i style="background:${cssVar('--s-female')}"></i>หญิง</span><span class="tt-strong">${female[i]} ราย</span></div>`);
+      const v = document.createElement('span'); v.className='pyr-val'; v.textContent = female[i];
+      right.appendChild(bar); right.appendChild(v);
+    }
+    row.appendChild(left); row.appendChild(agelabel); row.appendChild(right);
+    container.appendChild(row);
+  });
+  if(!rows.length){ container.innerHTML = '<div class="empty">ไม่มีข้อมูล</div>'; }
+}
+
+function renderSymptoms(rows){
+  const container = document.getElementById('symptomChart');
+  container.innerHTML = '';
+  if(!rows.length){ container.innerHTML = '<div class="empty">ไม่มีข้อมูล</div>'; return; }
+  const data = SYMPTOM_FIELDS.map(f=>{
+    let vals;
+    if(f.key==='rash'){
+      vals = rows.map(r=> r.other===null && r.onset===null ? null : hasRash(r)); // treat fully-blank rows (no investigation) as missing
+      vals = rows.filter(r=>r.onset).map(r=>hasRash(r));
+    } else {
+      vals = rows.map(r=>r[f.key]).filter(v=>v!==null && v!==undefined);
+    }
+    const yes = vals.filter(v=> v===true || v==="มี").length;
+    return {label:f.label, yes, n:vals.length, pct: vals.length ? yes/vals.length*100 : 0};
+  }).sort((a,b)=>b.pct-a.pct);
+  const max = 100;
+  data.forEach(d=>{
+    const row = document.createElement('div'); row.className='rank-row';
+    const lab = document.createElement('div'); lab.className='rlabel'; lab.textContent=d.label; lab.title=d.label;
+    const track = document.createElement('div'); track.className='rank-track';
+    const fill = document.createElement('div'); fill.className='rank-fill'; fill.style.width=(d.pct/max*100)+'%'; fill.style.background = cssVar('--accent');
+    fill.tabIndex=0; fill.setAttribute('aria-label', `${d.label} ${d.pct.toFixed(1)}%`);
+    wireTooltip(fill, ()=>`<div class="tt-title">${d.label}</div><div class="tt-row"><span class="tt-key">พบอาการ</span><span class="tt-strong">${d.yes}/${d.n} ราย (${d.pct.toFixed(1)}%)</span></div>`);
+    track.appendChild(fill);
+    const val = document.createElement('div'); val.className='rvalue'; val.textContent = d.pct.toFixed(0)+'%';
+    row.appendChild(lab); row.appendChild(track); row.appendChild(val);
+    container.appendChild(row);
+  });
+}
+
+function renderEpi(rows){
+  const container = document.getElementById('epiChart');
+  container.innerHTML = '';
+  const months = [];
+  for(let m=0;m<8;m++) months.push({key:`2026-${String(m+1).padStart(2,'0')}`, label:MONTHS_TH[m], pos:0, neg:0});
+  let missing = 0;
+  rows.forEach(r=>{
+    if(!r.onset){ missing++; return; }
+    const idx = months.findIndex(mo=>r.onset.startsWith(mo.key));
+    if(idx<0) return;
+    if(r.pcr==='Positive') months[idx].pos++; else months[idx].neg++;
+  });
+  const max = Math.max(1, ...months.map(m=>m.pos+m.neg));
+  months.forEach(mo=>{
+    const col = document.createElement('div'); col.className='vbar-col';
+    const total = mo.pos+mo.neg;
+    const totalLab = document.createElement('div'); totalLab.className='vbar-total'; totalLab.textContent = total || '';
+    const stack = document.createElement('div'); stack.className='vbar-stack';
+    stack.style.height = (total/max*140)+'px';
+    if(mo.pos>0){
+      const seg = document.createElement('div'); seg.className='vbar-seg'; seg.style.height=(mo.pos/total*100)+'%'; seg.style.background=cssVar('--status-critical');
+      seg.tabIndex=0; seg.setAttribute('aria-label', `${mo.label} ยืนยัน ${mo.pos} ราย`);
+      wireTooltip(seg, ()=>`<div class="tt-title">${mo.label} 2569</div><div class="tt-row"><span class="tt-key"><i style="background:${cssVar('--status-critical')}"></i>ยืนยัน PCR+</span><span class="tt-strong">${mo.pos} ราย</span></div>`);
+      stack.appendChild(seg);
+    }
+    if(mo.neg>0){
+      const seg = document.createElement('div'); seg.className='vbar-seg'; seg.style.height=(mo.neg/total*100)+'%'; seg.style.background=cssVar('--s-neutral');
+      seg.tabIndex=0; seg.setAttribute('aria-label', `${mo.label} ไม่ยืนยัน ${mo.neg} ราย`);
+      wireTooltip(seg, ()=>`<div class="tt-title">${mo.label} 2569</div><div class="tt-row"><span class="tt-key"><i style="background:${cssVar('--s-neutral')}"></i>ไม่ยืนยัน/ลบ</span><span class="tt-strong">${mo.neg} ราย</span></div>`);
+      stack.appendChild(seg);
+    }
+    const xlabel = document.createElement('div'); xlabel.className='vbar-xlabel'; xlabel.textContent = mo.label;
+    col.appendChild(totalLab); col.appendChild(stack); col.appendChild(xlabel);
+    container.appendChild(col);
+  });
+  if(missing){
+    const note = document.createElement('div');
+    note.style.cssText='position:absolute;right:0;top:-2px;font-size:11px;color:var(--text-muted)';
+    note.textContent = `* ไม่มีวันเริ่มป่วย ${missing} ราย (ไม่รวมในกราฟ)`;
+    container.appendChild(note);
+  }
+}
+
+function pcrPill(pcr){
+  if(pcr==='Positive') return `<span class="pill pos">Positive</span>`;
+  if(pcr==='Negative') return `<span class="pill neg">Negative</span>`;
+  return `<span class="pill na">–</span>`;
+}
+function seroChip(sero){
+  if(!sero) return `<span style="color:var(--text-muted)">–</span>`;
+  const c = SEROTYPE_COLOR[sero] ? SEROTYPE_COLOR[sero]() : cssVar('--s-neutral');
+  return `<span class="sero-chip"><i style="background:${c}"></i>${sero}</span>`;
+}
+function symptomTags(r){
+  const tags = [];
+  if(r.fever==='มี') tags.push('ไข้');
+  if(r.headache==='มี') tags.push('ปวดศีรษะ');
+  if(r.myalgia==='มี') tags.push('ปวดกล้ามเนื้อ');
+  if(r.retroorbital==='มี') tags.push('ปวดกระบอกตา');
+  if(r.arthralgia==='มี') tags.push('ปวดข้อ');
+  if(hasRash(r)) tags.push('ผื่น/ตาแดง');
+  if(!tags.length) return '<span style="color:var(--text-muted)">–</span>';
+  return `<div class="sym-icons">${tags.map(t=>`<span class="sym-tag">${t}</span>`).join('')}</div>`;
+}
+
+function renderTable(rows){
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  const sorted = [...rows].sort((a,b)=>{
+    let av = a[sortKey], bv = b[sortKey];
+    if(sortKey==='amphoe'){ av = a.amphoe+a.tambon; bv = b.amphoe+b.tambon; }
+    if(sortKey==='sex'){ av = a.sex*1000+(a.ageY||0); bv = b.sex*1000+(b.ageY||0); }
+    if(av===null||av===undefined) av = '';
+    if(bv===null||bv===undefined) bv = '';
+    if(av<bv) return -1*sortDir;
+    if(av>bv) return 1*sortDir;
+    return 0;
+  });
+  if(!sorted.length){
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:24px; color:var(--text-muted);">ไม่มีข้อมูลตรงตามตัวกรองที่เลือก</td></tr>';
+    return;
+  }
+  sorted.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="num strong">${r.id}</td>
+      <td>${beDateShort(r.onset)}</td>
+      <td>${beDateShort(r.diag)}</td>
+      <td>${r.province}</td>
+      <td>${r.amphoe}${r.tambon ? ' / '+r.tambon : ''}</td>
+      <td>${r.sex===1?'ชาย':'หญิง'} · ${r.ageY!=null? r.ageY+' ปี':'-'}</td>
+      <td>${r.occupation||'-'}</td>
+      <td>${r.rapid||'-'}</td>
+      <td>${pcrPill(r.pcr)}</td>
+      <td>${seroChip(r.serotype)}</td>
+      <td>${symptomTags(r)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+document.querySelectorAll('table.data thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if(!key) return;
+    if(sortKey===key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+    document.querySelectorAll('table.data thead th').forEach(t=>t.classList.remove('sorted'));
+    th.classList.add('sorted');
+    th.querySelector('.arrow').textContent = sortDir===1 ? '↑' : '↓';
+    updateAll();
+  });
+});
+
+function updateAll(){
+  const rows = getFiltered();
+  document.getElementById('filterStatus').innerHTML = `แสดง <b>${rows.length}</b> จาก ${DATA.length} รายการ`;
+  renderKPIs(rows);
+  renderProvinceChart(rows);
+  renderDistrictChart(rows);
+  renderPyramid(rows);
+  renderSymptoms(rows);
+  renderEpi(rows);
+  renderTable(rows);
+}
+
+function init(){
+  const now = new Date();
+  document.getElementById('asOfDate').textContent = beDate(now.toISOString().slice(0,10));
+  document.getElementById('buildDate').textContent = beDate(now.toISOString().slice(0,10));
+  document.getElementById('footN').textContent = DATA.length;
+
+  populateFilters();
+
+  document.getElementById('fProvince').addEventListener('change', ()=>{ refreshAmphoeOptions(); updateAll(); });
+  ['fAmphoe','fMethod','fResult','fSerotype','fDateFrom','fDateTo'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', updateAll);
+  });
+  document.getElementById('btnReset').addEventListener('click', ()=>{
+    document.getElementById('fProvince').value='';
+    refreshAmphoeOptions();
+    ['fAmphoe','fMethod','fResult','fSerotype'].forEach(id=>document.getElementById(id).value='');
+    const dates = DATA.map(r=>r.onset).filter(Boolean).sort();
+    document.getElementById('fDateFrom').value = dates[0];
+    document.getElementById('fDateTo').value = dates[dates.length-1];
+    updateAll();
+  });
+
+  window.addEventListener('scroll', ()=>{ if(tooltipEl.classList.contains('show')) hideTooltip(); }, {passive:true});
+
+  updateAll();
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
