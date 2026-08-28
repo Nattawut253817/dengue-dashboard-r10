@@ -8,6 +8,670 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+/* Leaflet 1.9.4 core styles (c) 2010-2023 Vladimir Agafonkin — inlined per CSP (no external stylesheets) */
+/* required styles */
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+/* Prevents IE11 from highlighting tiles in blue */
+.leaflet-tile::selection {
+	background: transparent;
+}
+/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+/* hack that prevents hw layers "stretching" when loading new tiles */
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
+/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+
+.leaflet-container img.leaflet-tile {
+	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
+	mix-blend-mode: plus-lighter;
+}
+
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	/* Fallback for FF which doesn't support pinch-zoom */
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+
+.leaflet-pane         { z-index: 400; }
+
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.lvml {
+	behavior: url(#default#VML);
+	display: inline-block;
+	position: absolute;
+	}
+
+
+/* control positioning */
+
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+
+
+/* zoom and fade animations */
+
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+
+
+/* cursors */
+
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+
+/* marker & overlays interactivity */
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+
+/* visual tweaks */
+
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+
+
+/* general typography */
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+
+
+/* general toolbar styles */
+
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+
+/* zoom control */
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+
+
+/* layers control */
+
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-control-layers-toggle {
+	background-image: url(images/layers.png);
+	width: 36px;
+	height: 36px;
+	}
+.leaflet-retina .leaflet-control-layers-toggle {
+	background-image: url(images/layers-2x.png);
+	background-size: 26px 26px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+
+/* Default icon URLs */
+.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
+	background-image: url(images/marker-icon.png);
+	}
+
+
+/* attribution and scale controls */
+
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+
+
+/* popup */
+
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+
+	margin: -10px auto 0;
+	pointer-events: auto;
+
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+
+
+/* div icon */
+
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+
+
+/* Tooltip */
+/* Base styles for the element that has a tooltip */
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+
+/* Directions */
+
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+
+/* Printing */
+
+@media print {
+	/* Prevent printers from removing background-images of controls. */
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+</style>
+<style>
 /* =========================================================
    TOKENS — light default, dark via prefers-color-scheme + [data-theme]
    Palette: validated dataviz reference (categorical + status)
@@ -217,16 +881,13 @@ header.top .meta a{color:var(--text-secondary); text-decoration:underline; text-
 .legend i{width:10px; height:10px; border-radius:3px; display:inline-block; flex:none;}
 .legend i.line{width:12px; height:2px; border-radius:1px;}
 
-/* ---------- HTML/CSS bar charts ---------- */
-.hbar-rows{display:flex; flex-direction:column; gap:10px;}
-.hbar-row{display:grid; grid-template-columns:112px 1fr 46px; align-items:center; gap:10px;}
-.hbar-row .rlabel{font-size:12.5px; color:var(--text-secondary); text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.hbar-track{position:relative; height:22px; background:var(--surface-2); border-radius:5px; overflow:hidden; display:flex;}
-.hbar-seg{height:100%; position:relative; cursor:pointer; transition:filter .12s ease;}
-.hbar-seg:hover, .hbar-seg:focus-visible{filter:brightness(1.08);}
-.hbar-seg:not(:last-child){border-right:2px solid var(--surface);}
-.hbar-row .rvalue{font-size:12.5px; font-weight:700; color:var(--text-primary); text-align:right; font-variant-numeric:tabular-nums;}
+/* map */
+#map{height:320px; border-radius:10px; overflow:hidden; border:1px solid var(--border); background:var(--surface-2);}
+.map-note{font-size:11px; color:var(--text-muted); margin-top:8px; line-height:1.6;}
+.map-pin-tooltip{font-family:'Sarabun','Noto Sans Thai',sans-serif; font-size:12.5px; line-height:1.5;}
+.map-pin-tooltip b{font-weight:700;}
 
+/* ---------- HTML/CSS bar charts ---------- */
 .rank-rows{display:flex; flex-direction:column; gap:9px;}
 .rank-row{display:grid; grid-template-columns:1fr 3.4fr 30px; align-items:center; gap:9px;}
 .rank-row .rlabel{font-size:12.5px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -384,10 +1045,11 @@ footer code{background:var(--surface-2); padding:1px 5px; border-radius:4px; fon
 
   <div class="grid2">
     <div class="panel">
-      <h2>การกระจายผู้ป่วยตามจังหวัด แยกตาม Serotype</h2>
-      <div class="desc">เรียงจากจังหวัดที่พบผู้ส่งตรวจมากที่สุด — สีแสดงสายพันธุ์ที่ยืนยันด้วย PCR</div>
-      <div class="hbar-rows" id="provinceChart"></div>
-      <div class="legend" id="provinceLegend"></div>
+      <h2>แผนที่การกระจายผู้ป่วย (ระดับอำเภอ)</h2>
+      <div class="desc">ขนาดวงกลม = จำนวนตัวอย่างส่งตรวจ · สี = Serotype เด่นที่ยืนยันด้วย PCR ในอำเภอนั้น</div>
+      <div id="map"></div>
+      <div class="legend" id="mapLegend"></div>
+      <div class="map-note">* พิกัดเป็นจุดศูนย์กลางอำเภอโดยประมาณ ใช้เพื่อภาพรวมการกระจายเชิงพื้นที่ ไม่ใช่พิกัดที่อยู่จริงของผู้ป่วยรายบุคคล</div>
     </div>
     <div class="panel">
       <h2>อำเภอที่พบผู้ป่วยสูงสุด</h2>
@@ -476,6 +1138,7 @@ footer code{background:var(--surface-2); padding:1px 5px; border-radius:4px; fon
 
 <div class="viz-tooltip" id="tooltip" role="tooltip"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
 /* ============================================================
    ข้อมูลสำรอง (ใช้เมื่อดึงสดจาก Google Sheets ไม่ได้ เช่น ออฟไลน์/เครือข่ายบล็อก)
@@ -533,6 +1196,26 @@ const SYMPTOM_FIELDS = [
   {key:"rash", label:"ผื่นแดง/ตาแดง*"},
 ];
 const MONTHS_TH = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+// พิกัดศูนย์กลางอำเภอโดยประมาณ (ระดับอำเภอ ไม่ใช่ที่อยู่จริงของผู้ป่วย) — ครอบคลุมทุกอำเภอที่พบในข้อมูล
+const DISTRICT_COORDS = {
+  "เมืองอุบลราชธานี|อุบลราชธานี": [15.2286, 104.8564],
+  "ตาลสุม|อุบลราชธานี": [15.3167, 105.2333],
+  "เดชอุดม|อุบลราชธานี": [14.9667, 105.0500],
+  "พิบูลมังสาหาร|อุบลราชธานี": [15.2394, 105.2314],
+  "บุณฑริก|อุบลราชธานี": [14.8800, 105.2200],
+  "ทุ่งศรีอุดม|อุบลราชธานี": [14.7000, 105.3500],
+  "นาจะหลวย|อุบลราชธานี": [14.6667, 105.3000],
+  "สำโรง|อุบลราชธานี": [15.1500, 105.1500],
+  "กุดข้าวปุ้น|อุบลราชธานี": [15.6167, 105.1500],
+  "ศรีเมืองใหม่|อุบลราชธานี": [15.4667, 105.0833],
+  "สิรินธร|อุบลราชธานี": [15.2333, 105.4333],
+  "วังหิน|ศรีสะเกษ": [15.0333, 104.2833],
+  "ยางชุมน้อย|ศรีสะเกษ": [15.2333, 104.3500],
+  "กุดชุม|ยโสธร": [15.9667, 104.3500],
+  "ทรายมูล|ยโสธร": [15.8500, 104.4000],
+  "เมืองอำนาจเจริญ|อำนาจเจริญ": [15.8656, 104.6286],
+  "คำชะอี|มุกดาหาร": [16.5333, 104.6667],
+};
 
 function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 function beDate(iso){
@@ -757,6 +1440,7 @@ function getFiltered(){
 
 /* ---------------- renderers ---------------- */
 let sortKey = 'id', sortDir = 1;
+let map, mapMarkers = [], mapTileLayer;
 
 function renderKPIs(rows){
   document.getElementById('kpiTotal').textContent = rows.length;
@@ -789,52 +1473,82 @@ function renderKPIs(rows){
   document.getElementById('kpiDaysNote').textContent = `คำนวณจาก [วันวินิจฉัย − วันเริ่มป่วย], n=${withDates.length} ราย`;
 }
 
-function renderProvinceChart(rows){
-  const container = document.getElementById('provinceChart');
-  container.innerHTML = '';
-  if(!rows.length){ container.innerHTML = '<div class="empty">ไม่มีข้อมูลตรงตามตัวกรอง</div>'; document.getElementById('provinceLegend').innerHTML=''; return; }
+const SEG_LABEL = {"Type 1":"Type 1","Type 2":"Type 2","Type 3":"Type 3","Type 4":"Type 4","none":"ไม่ยืนยัน/PCR ลบ"};
 
-  const provinces = {};
+function renderMap(rows){
+  const mapEl = document.getElementById('map');
+  const legend = document.getElementById('mapLegend');
+
+  if(typeof L === 'undefined'){
+    mapEl.innerHTML = '<div class="empty">ไม่สามารถโหลดไลบรารีแผนที่ได้ (ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต)</div>';
+    return;
+  }
+  if(!map){
+    map = L.map('map', {scrollWheelZoom:false});
+    mapTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+      maxZoom:16
+    }).addTo(map);
+    map.setView([15.4, 104.95], 8);
+  }
+  mapMarkers.forEach(m=>map.removeLayer(m));
+  mapMarkers = [];
+
+  // จัดกลุ่มตามอำเภอ+จังหวัด หา serotype เด่นที่ยืนยันด้วย PCR ของแต่ละอำเภอ
+  const groups = {};
   rows.forEach(r=>{
-    if(!provinces[r.province]) provinces[r.province] = {total:0, seg:{"Type 1":0,"Type 2":0,"Type 3":0,"Type 4":0,"none":0}};
-    provinces[r.province].total++;
-    const key = (r.pcr==="Positive" && r.serotype) ? r.serotype : "none";
-    provinces[r.province].seg[key]++;
-  });
-  const order = Object.entries(provinces).sort((a,b)=>b[1].total-a[1].total);
-  const max = order[0][1].total;
-  const segKeys = [...SEROTYPE_ORDER, "none"];
-  const segLabel = {"Type 1":"Type 1","Type 2":"Type 2","Type 3":"Type 3","Type 4":"Type 4","none":"ไม่ยืนยัน/PCR ลบ"};
-
-  order.forEach(([prov, info])=>{
-    const row = document.createElement('div'); row.className='hbar-row';
-    const lab = document.createElement('div'); lab.className='rlabel'; lab.textContent=prov; lab.title=prov;
-    const track = document.createElement('div'); track.className='hbar-track';
-    segKeys.forEach(k=>{
-      const n = info.seg[k];
-      if(!n) return;
-      const seg = document.createElement('div'); seg.className='hbar-seg';
-      seg.style.width = (n/max*100)+'%';
-      seg.style.background = SEROTYPE_COLOR[k]();
-      seg.tabIndex = 0;
-      seg.setAttribute('aria-label', `${prov} · ${segLabel[k]} · ${n} ราย`);
-      wireTooltip(seg, ()=>`<div class="tt-title">${prov}</div><div class="tt-row"><span class="tt-key"><i style="background:${SEROTYPE_COLOR[k]()}"></i>${segLabel[k]}</span><span class="tt-strong">${n} ราย</span></div>`);
-      track.appendChild(seg);
-    });
-    const val = document.createElement('div'); val.className='rvalue'; val.textContent = info.total;
-    row.appendChild(lab); row.appendChild(track); row.appendChild(val);
-    container.appendChild(row);
+    if(!r.amphoe || !r.province) return;
+    const key = r.amphoe+"|"+r.province;
+    if(!groups[key]) groups[key] = {amphoe:r.amphoe, province:r.province, rows:[], seg:{"Type 1":0,"Type 2":0,"Type 3":0,"Type 4":0,"none":0}};
+    groups[key].rows.push(r);
+    const sk = (r.pcr==="Positive" && r.serotype) ? r.serotype : "none";
+    groups[key].seg[sk]++;
   });
 
-  const legend = document.getElementById('provinceLegend');
+  const entries = Object.entries(groups);
+  const maxCount = Math.max(1, ...entries.map(([,g])=>g.rows.length));
+  const bounds = [];
+  const usedSero = new Set();
+
+  entries.forEach(([key, g])=>{
+    const coord = DISTRICT_COORDS[key];
+    if(!coord) return; // ไม่มีพิกัดอ้างอิงสำหรับอำเภอนี้ในชุดข้อมูลอ้างอิง
+    const dominant = Object.entries(g.seg).sort((a,b)=>b[1]-a[1])[0][0];
+    usedSero.add(dominant);
+    const color = SEROTYPE_COLOR[dominant]();
+    const radius = 8 + Math.sqrt(g.rows.length/maxCount) * 18;
+    const marker = L.circleMarker(coord, {
+      radius, color, fillColor:color, fillOpacity:0.55, weight:2
+    }).addTo(map);
+    const confirmedLines = SEROTYPE_ORDER.filter(s=>g.seg[s]>0).map(s=>
+      `<div class="tt-row"><span class="tt-key"><i style="background:${SEROTYPE_COLOR[s]()}"></i>${s}</span><span class="tt-strong">${g.seg[s]} ราย</span></div>`
+    ).join('');
+    const negLine = g.seg.none ? `<div class="tt-row"><span class="tt-key"><i style="background:${SEROTYPE_COLOR.none()}"></i>ไม่ยืนยัน/PCR ลบ</span><span class="tt-strong">${g.seg.none} ราย</span></div>` : '';
+    marker.bindTooltip(
+      `<div class="map-pin-tooltip"><b>อ.${g.amphoe} จ.${g.province}</b><br>ส่งตรวจทั้งหมด: <b>${g.rows.length} ราย</b>${confirmedLines}${negLine}</div>`,
+      {direction:'top', offset:[0,-4]}
+    );
+    mapMarkers.push(marker);
+    bounds.push(coord);
+  });
+
+  if(bounds.length){
+    map.fitBounds(bounds, {padding:[36,36], maxZoom:10});
+  } else {
+    map.setView([15.4, 104.95], 8);
+  }
+
   legend.innerHTML = '';
-  segKeys.forEach(k=>{
-    if(!order.some(([,info])=>info.seg[k]>0)) return;
+  [...SEROTYPE_ORDER, "none"].forEach(k=>{
+    if(!usedSero.has(k)) return;
     const span = document.createElement('span');
-    const i = document.createElement('i'); i.style.background = SEROTYPE_COLOR[k]();
-    span.appendChild(i); span.appendChild(document.createTextNode(segLabel[k]));
+    const i = document.createElement('i'); i.style.cssText='border-radius:50%;'; i.style.background = SEROTYPE_COLOR[k]();
+    span.appendChild(i); span.appendChild(document.createTextNode(SEG_LABEL[k]));
     legend.appendChild(span);
   });
+  if(!entries.length){
+    legend.innerHTML = '<span style="color:var(--text-muted)">ไม่มีข้อมูลตรงตามตัวกรอง</span>';
+  }
 }
 
 function renderDistrictChart(rows){
@@ -1038,7 +1752,7 @@ function updateAll(){
   document.getElementById('filterStatus').innerHTML = `แสดง <b>${rows.length}</b> จาก ${DATA.length} รายการ`;
   document.getElementById('footN').textContent = DATA.length;
   renderKPIs(rows);
-  renderProvinceChart(rows);
+  renderMap(rows);
   renderDistrictChart(rows);
   renderPyramid(rows);
   renderSymptoms(rows);
