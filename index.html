@@ -148,6 +148,9 @@ header.top .titleblock .org{font-size:12.5px; color:var(--text-muted); letter-sp
 }
 .chip.snapshot{background:var(--surface-2); color:var(--text-secondary); border:1px solid var(--border);}
 .chip.snapshot::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--status-good); display:inline-block;}
+.chip.snapshot.offline::before{background:var(--status-warning);}
+.chip.snapshot.loading::before{background:var(--text-muted); animation:pulse 1.1s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
 header.top .meta{text-align:right; font-size:12.5px; color:var(--text-muted); display:flex; flex-direction:column; gap:4px; align-items:flex-end;}
 header.top .meta a{color:var(--text-secondary); text-decoration:underline; text-decoration-color:var(--border-strong);}
 
@@ -315,8 +318,9 @@ footer code{background:var(--surface-2); padding:1px 5px; border-radius:4px; fon
       <div class="org">เขตสุขภาพที่ 10 (อุบลราชธานี · ศรีสะเกษ · ยโสธร · อำนาจเจริญ · มุกดาหาร) — กรมควบคุมโรค (DDC)</div>
     </div>
     <div class="meta">
-      <div>ข้อมูล ณ วันที่ <b id="asOfDate" style="color:var(--text-secondary)">-</b></div>
+      <div id="syncStatusLine">ข้อมูล ณ วันที่ <b id="asOfDate" style="color:var(--text-secondary)">-</b></div>
       <div>แหล่งข้อมูล: <a href="https://docs.google.com/spreadsheets/d/1NTxcQvNkjdfq8vX_-1gcXa0fJjwGr4NO2XInzNcUV0Q/edit" target="_blank" rel="noopener">Google Sheets (ชีต serotype)</a></div>
+      <button class="reset" id="btnRefresh" type="button" style="height:28px; padding:0 10px; font-size:12px; margin-top:2px;">↻ รีเฟรชข้อมูลจาก Sheets</button>
     </div>
   </header>
 
@@ -474,10 +478,12 @@ footer code{background:var(--surface-2); padding:1px 5px; border-radius:4px; fon
 
 <script>
 /* ============================================================
-   ข้อมูล — ตรวจสอบตรงกับ Google Sheets ต้นทางและไฟล์ต้นฉบับแล้ว (n=24)
+   ข้อมูลสำรอง (ใช้เมื่อดึงสดจาก Google Sheets ไม่ได้ เช่น ออฟไลน์/เครือข่ายบล็อก)
+   ตรวจสอบตรงกับ Google Sheets ต้นทางและไฟล์ต้นฉบับแล้ว ณ วันที่ทำหน้านี้ (n=24)
    แหล่ง: ชีต "serotype" ใน 69-แบบเก็บข้อมูล Lab_270769.xlsx
    ============================================================ */
-const DATA = [
+const FALLBACK_ASOF = '2026-08-28';
+const FALLBACK_DATA = [
 {"id":1,"sex":2,"ageY":64,"occupation":"แม่บ้าน","tambon":"ไร่น้อย","amphoe":"เมืองอุบลราชธานี","province":"อุบลราชธานี","rapid":"NS1","result":"Positive","pcr":"Negative","serotype":null,"onset":"2026-01-27","diag":"2026-01-29","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":null},
 {"id":2,"sex":2,"ageY":26,"occupation":"ว่างงาน","tambon":"จิกเทิง","amphoe":"ตาลสุม","province":"อุบลราชธานี","rapid":"NS1","result":"Positive","pcr":"Positive","serotype":"Type 2","onset":"2026-01-30","diag":"2026-02-03","fever":"มี","headache":"มี","myalgia":"มี","arthralgia":"มี","retroorbital":"ไม่มี","other":"เบื่ออาหาร, ท้องเสีย"},
 {"id":3,"sex":2,"ageY":9,"occupation":"นักเรียน","tambon":"ขามใหญ่","amphoe":"เมืองอุบลราชธานี","province":"อุบลราชธานี","rapid":null,"result":null,"pcr":"Negative","serotype":null,"onset":"2026-02-15","diag":"2026-02-20","fever":"ไม่มี","headache":"ไม่มี","myalgia":"ไม่มี","arthralgia":"ไม่มี","retroorbital":"ไม่มี","other":"ผื่นแดง, ตาแดง"},
@@ -541,6 +547,111 @@ function beDateShort(iso){
 }
 function hasRash(r){ return !!(r.other && /ผื่น|ตาแดง|แดง/.test(r.other)); }
 
+/* ---------------- live Google Sheets connection ---------------- */
+const SHEET_ID = '1NTxcQvNkjdfq8vX_-1gcXa0fJjwGr4NO2XInzNcUV0Q';
+const SHEET_TAB = 'serotype';
+const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}`;
+
+let DATA = FALLBACK_DATA;
+let dataMode = 'fallback'; // 'live' | 'fallback'
+let dataAsOf = FALLBACK_ASOF;
+
+function gvizCell(row, idx){
+  const c = row.c ? row.c[idx] : null;
+  if(!c) return null;
+  const v = c.v;
+  return (v === null || v === undefined || v === '') ? null : v;
+}
+function gvizDate(row, idx){
+  const c = row.c ? row.c[idx] : null;
+  if(!c || c.v == null) return null;
+  const m = typeof c.v === 'string' && c.v.match(/^Date\((\d+),(\d+),(\d+)/);
+  if(!m) return null;
+  const y = +m[1], mo = +m[2], d = +m[3];
+  return `${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+// คอลัมน์ในชีต "serotype" (ตำแหน่ง A..V, ดัชนีเริ่ม 0):
+// 0 ลำดับ | 1 ปีที่ตรวจ | 2 เพศ | 3 อายุ(ปี) | 4 อายุ(เดือน) | 5 อาชีพ | 6 หมู่ที่ | 7 ตำบล | 8 อำเภอ | 9 จังหวัด
+// 10 rapid test | 11 ผล | 12 PCR | 13 serptype | 14 วันเริ่มป่วย | 15 วันที่วินิจฉัย
+// 16 ไข้>38 | 17 ปวดศีรษะ | 18 ปวดกล้ามเนื้อ | 19 ปวดข้อกระดูก | 20 ปวดกระบอกตา | 21 อาการอื่นๆ
+function mapGvizRow(row){
+  const num = v => (v===null||v===undefined) ? null : Number(v);
+  const str = v => (v===null||v===undefined) ? null : String(v).trim() || null;
+  return {
+    id: num(gvizCell(row,0)),
+    sex: num(gvizCell(row,2)),
+    ageY: num(gvizCell(row,3)),
+    occupation: str(gvizCell(row,5)),
+    tambon: str(gvizCell(row,7)),
+    amphoe: str(gvizCell(row,8)),
+    province: str(gvizCell(row,9)),
+    rapid: str(gvizCell(row,10)),
+    result: str(gvizCell(row,11)),
+    pcr: str(gvizCell(row,12)),
+    serotype: str(gvizCell(row,13)),
+    onset: gvizDate(row,14),
+    diag: gvizDate(row,15),
+    fever: str(gvizCell(row,16)),
+    headache: str(gvizCell(row,17)),
+    myalgia: str(gvizCell(row,18)),
+    arthralgia: str(gvizCell(row,19)),
+    retroorbital: str(gvizCell(row,20)),
+    other: str(gvizCell(row,21)),
+  };
+}
+async function fetchLiveData(){
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), 9000);
+  try{
+    const res = await fetch(GVIZ_URL, {signal:controller.signal, cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text = await res.text();
+    const jsonStr = text.substring(text.indexOf('(')+1, text.lastIndexOf(')'));
+    const parsed = JSON.parse(jsonStr);
+    if(parsed.status !== 'ok' || !parsed.table || !Array.isArray(parsed.table.rows)) throw new Error('bad gviz response');
+    const rows = parsed.table.rows
+      .filter(r=>r && r.c && r.c.some(c=>c && c.v!==null && c.v!==undefined && c.v!==''))
+      .map(mapGvizRow)
+      .filter(r=>r.id!=null);
+    if(!rows.length) throw new Error('empty sheet');
+    return rows;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+function setSyncUI(mode){
+  const chip = document.getElementById('modeChip');
+  const asOfEl = document.getElementById('asOfDate');
+  chip.classList.remove('offline','loading');
+  if(mode==='loading'){
+    chip.classList.add('loading');
+    chip.textContent = 'กำลังเชื่อมต่อ Google Sheets…';
+    asOfEl.textContent = '-';
+  } else if(mode==='live'){
+    chip.textContent = 'เชื่อมต่อสด · Google Sheets';
+    asOfEl.textContent = beDate(new Date().toISOString().slice(0,10)) + ' ' + new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) + ' น.';
+  } else {
+    chip.classList.add('offline');
+    chip.textContent = 'ข้อมูลสำรอง (ออฟไลน์)';
+    asOfEl.textContent = beDate(FALLBACK_ASOF) + ' (ในไฟล์)';
+  }
+}
+async function loadData(){
+  setSyncUI('loading');
+  try{
+    const rows = await fetchLiveData();
+    DATA = rows;
+    dataMode = 'live';
+  } catch(err){
+    console.warn('เชื่อมต่อ Google Sheets สดไม่สำเร็จ ใช้ข้อมูลสำรองแทน:', err);
+    DATA = FALLBACK_DATA;
+    dataMode = 'fallback';
+  }
+  setSyncUI(dataMode);
+  populateFilters();
+  updateAll();
+}
+
 /* ---------------- tooltip ---------------- */
 const tooltipEl = document.getElementById('tooltip');
 function showTooltip(evt, html){
@@ -572,28 +683,42 @@ function wireTooltip(el, htmlFn){
 /* ---------------- filters ---------------- */
 function uniqueSorted(arr){ return [...new Set(arr.filter(v=>v!==null && v!==undefined && v!==''))].sort((a,b)=>String(a).localeCompare(String(b),'th')); }
 
+function resetSelect(sel){ sel.innerHTML = '<option value="">ทั้งหมด</option>'; }
+
 function populateFilters(){
   const provSel = document.getElementById('fProvince');
+  const prevProv = provSel.value;
+  resetSelect(provSel);
   uniqueSorted(DATA.map(r=>r.province)).forEach(p=>{
     const o=document.createElement('option'); o.value=p; o.textContent=p; provSel.appendChild(o);
   });
+  if([...provSel.options].some(o=>o.value===prevProv)) provSel.value = prevProv;
+
   const methodSel = document.getElementById('fMethod');
+  resetSelect(methodSel);
   uniqueSorted(DATA.map(r=>r.rapid)).forEach(m=>{
     const o=document.createElement('option'); o.value=m; o.textContent=m; methodSel.appendChild(o);
   });
+
   const resultSel = document.getElementById('fResult');
+  resetSelect(resultSel);
   uniqueSorted(DATA.map(r=>r.pcr)).forEach(v=>{
     const o=document.createElement('option'); o.value=v; o.textContent = v==="Positive" ? "Positive (ยืนยัน)" : "Negative (ไม่ยืนยัน)"; resultSel.appendChild(o);
   });
+
   const seroSel = document.getElementById('fSerotype');
+  resetSelect(seroSel);
+  seroSel.querySelector('option').textContent = 'ทั้งหมด';
   SEROTYPE_ORDER.filter(s => DATA.some(r=>r.serotype===s)).forEach(s=>{
     const o=document.createElement('option'); o.value=s; o.textContent=s; seroSel.appendChild(o);
   });
   const oNone = document.createElement('option'); oNone.value="none"; oNone.textContent="ไม่ระบุ / ไม่พบ"; seroSel.appendChild(oNone);
 
   const dates = DATA.map(r=>r.onset).filter(Boolean).sort();
-  document.getElementById('fDateFrom').value = dates[0];
-  document.getElementById('fDateTo').value = dates[dates.length-1];
+  if(dates.length){
+    document.getElementById('fDateFrom').value = dates[0];
+    document.getElementById('fDateTo').value = dates[dates.length-1];
+  }
 
   refreshAmphoeOptions();
 }
@@ -911,6 +1036,7 @@ document.querySelectorAll('table.data thead th').forEach(th=>{
 function updateAll(){
   const rows = getFiltered();
   document.getElementById('filterStatus').innerHTML = `แสดง <b>${rows.length}</b> จาก ${DATA.length} รายการ`;
+  document.getElementById('footN').textContent = DATA.length;
   renderKPIs(rows);
   renderProvinceChart(rows);
   renderDistrictChart(rows);
@@ -921,12 +1047,7 @@ function updateAll(){
 }
 
 function init(){
-  const now = new Date();
-  document.getElementById('asOfDate').textContent = beDate(now.toISOString().slice(0,10));
-  document.getElementById('buildDate').textContent = beDate(now.toISOString().slice(0,10));
-  document.getElementById('footN').textContent = DATA.length;
-
-  populateFilters();
+  document.getElementById('buildDate').textContent = beDate(new Date().toISOString().slice(0,10));
 
   document.getElementById('fProvince').addEventListener('change', ()=>{ refreshAmphoeOptions(); updateAll(); });
   ['fAmphoe','fMethod','fResult','fSerotype','fDateFrom','fDateTo'].forEach(id=>{
@@ -941,10 +1062,16 @@ function init(){
     document.getElementById('fDateTo').value = dates[dates.length-1];
     updateAll();
   });
+  document.getElementById('btnRefresh').addEventListener('click', async ()=>{
+    const btn = document.getElementById('btnRefresh');
+    btn.disabled = true; btn.textContent = 'กำลังโหลด…';
+    await loadData();
+    btn.disabled = false; btn.textContent = '↻ รีเฟรชข้อมูลจาก Sheets';
+  });
 
   window.addEventListener('scroll', ()=>{ if(tooltipEl.classList.contains('show')) hideTooltip(); }, {passive:true});
 
-  updateAll();
+  loadData();
 }
 document.addEventListener('DOMContentLoaded', init);
 </script>
